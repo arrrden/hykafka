@@ -12,7 +12,7 @@ type KafkaClient struct {
 	ctx    context.Context
 	Host   string
 	Topics map[string]int
-	logger zerolog.Logger
+	logger *zerolog.Logger
 	log    func(*zerolog.Event)
 }
 
@@ -28,7 +28,7 @@ func NewKafkaClient(ctx context.Context, host string, logger *zerolog.Logger) (*
 	client := &KafkaClient{
 		ctx:    ctx,
 		Host:   host,
-		logger: *logger,
+		logger: logger,
 	}
 	client.log = func(e *zerolog.Event) {
 		if logger != nil {
