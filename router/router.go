@@ -145,7 +145,7 @@ func (r *RouterImpl) Listen() error {
 					err = conn.Produce(r.errTopic, kafka.Message{
 						Partition: int(gkafka.PatternTypeAny),
 						Key:       []byte("error"),
-						Value:     []byte(err.Error()),
+						Value:     []byte(errs.Error()),
 						Headers: []gkafka.Header{
 							{Key: kafka.MsgHeaderMessageType, Value: []byte(MsgTypeErrEvent)},
 						},
