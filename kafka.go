@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rs/zerolog"
 	kafka "github.com/segmentio/kafka-go"
 )
 
@@ -12,11 +11,9 @@ type KafkaClient struct {
 	ctx    context.Context
 	Host   string
 	Topics map[string]int
-	logger *zerolog.Logger
-	log    func(*zerolog.Event)
 }
 
-func NewKafkaClient(ctx context.Context, host string, logger *zerolog.Logger) (*KafkaClient, error) {
+func NewKafkaClient(ctx context.Context, host string) (*KafkaClient, error) {
 	// dial the client to ensure it's valid
 	conn, err := Dial(host)
 	if err != nil {
@@ -26,16 +23,9 @@ func NewKafkaClient(ctx context.Context, host string, logger *zerolog.Logger) (*
 	conn.Close()
 
 	client := &KafkaClient{
-		ctx:    ctx,
-		Host:   host,
-		logger: logger,
+		ctx:  ctx,
+		Host: host,
 	}
-	client.log = func(e *zerolog.Event) {
-		if logger != nil {
-			e.Send()
-		}
-	}
-
 	return client, nil
 }
 

@@ -7,11 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/rs/zerolog"
-
+	kafka "github.com/arrrden/hykafka"
 	"github.com/arrrden/hykafka/examples/router/handlers/listings"
-	kafka "github.com/arrrden/hykafka/hykafka"
-	"github.com/arrrden/hykafka/hykafka/router"
+	"github.com/arrrden/hykafka/router"
+	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -20,7 +19,7 @@ func main() {
 
 	// Attach the Logger to the context.Context
 	ctx = logger.WithContext(ctx)
-	k, err := kafka.NewKafkaClient(ctx, "localhost:9094", &logger)
+	k, err := kafka.NewKafkaClient(ctx, "localhost:9094")
 	if err != nil {
 		log.Fatal(err)
 	}

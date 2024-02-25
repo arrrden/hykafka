@@ -39,7 +39,6 @@ func (c *Connection) Produce(topic string, messages ...kafka.Message) error {
 		}
 
 		if err != nil {
-			c.Client.log(c.Client.logger.Error().AnErr("failed to write messages", err))
 			return fmt.Errorf("failed to write messages, unexpected error: %w", err)
 		}
 		break
@@ -66,7 +65,6 @@ loop:
 		default:
 			msg, err := reader.ReadMessage(ctx)
 			if err != nil {
-				c.Client.log(c.Client.logger.Error().AnErr("failed to read message", err))
 				err = fmt.Errorf("failed to read message: %w", err)
 				return err
 			}

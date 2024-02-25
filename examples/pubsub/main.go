@@ -6,13 +6,13 @@ import (
 	"log"
 	"time"
 
-	kafka "github.com/arrrden/hykafka/hykafka"
+	kafka "github.com/arrrden/hykafka"
 	gkafka "github.com/segmentio/kafka-go"
 )
 
 func main() {
 	ctx := context.Background()
-	k, err := kafka.NewKafkaClient(ctx, "localhost:9094", nil)
+	k, err := kafka.NewKafkaClient(ctx, "localhost:9094")
 	if err != nil {
 		log.Fatal(err)
 	}

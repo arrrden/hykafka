@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	kafka "github.com/arrrden/hykafka/hykafka"
+	kafka "github.com/arrrden/hykafka"
 )
 
 type Listings struct{}

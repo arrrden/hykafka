@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	kafka "github.com/arrrden/hykafka/hykafka"
+	kafka "github.com/arrrden/hykafka"
 	gkafka "github.com/segmentio/kafka-go"
 )
 
