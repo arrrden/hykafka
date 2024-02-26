@@ -52,13 +52,24 @@ type TopicRouteGroup struct {
 	handlers    map[string]MsgHandler
 }
 
-func NewRouter(ctx context.Context, groupId string, kafkaClient *kafka.KafkaClient) Router {
-	return &RouterImpl{
+type NewRouterOptions struct {
+	GroupId  string
+	ErrTopic string
+}
+
+func NewRouter(ctx context.Context, kafkaClient *kafka.KafkaClient, opts *NewRouterOptions) Router {
+	r := &RouterImpl{
 		ctx:       ctx,
 		client:    kafkaClient,
-		groupId:   groupId,
 		routeGrps: make(map[string]*TopicRouteGroup),
 	}
+
+	if opts != nil {
+		r.errTopic = opts.ErrTopic
+		r.groupId = opts.GroupId
+	}
+
+	return r
 }
 
 type RouterImpl struct {
@@ -141,10 +152,9 @@ func (r *RouterImpl) Listen() error {
 			case msg := <-msgCh:
 				r.callHandler(&msg)
 			case errs := <-errCh:
-				if errs != nil {
+				if errs != nil && r.errTopic != "" {
 					err = conn.Produce(r.errTopic, kafka.Message{
 						Partition: int(gkafka.PatternTypeAny),
-						Topic:     r.errTopic,
 						Key:       []byte("error"),
 						Value:     []byte(errs.Error()),
 						Headers: []gkafka.Header{
@@ -152,8 +162,10 @@ func (r *RouterImpl) Listen() error {
 						},
 					})
 					if err != nil {
-						fmt.Printf("failed to produce error on error topic: %s", err.Error())
+						fmt.Println("failed to produce error on error topic: ", err.Error())
 					}
+				} else {
+					fmt.Println("received error from listener: ", err.Error())
 				}
 			}
 		}

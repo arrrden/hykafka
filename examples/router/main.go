@@ -42,7 +42,10 @@ func main() {
 		}
 	}()
 
-	rtr := router.NewRouter(ctx, "boobies", k)
+	rtr := router.NewRouter(ctx, k, &router.NewRouterOptions{
+		GroupId:  "boobies",
+		ErrTopic: "errors",
+	})
 
 	listingsHandler := listings.NewListingsHandler(&listings.Listings{})
 
