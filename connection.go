@@ -47,7 +47,7 @@ func (c *Connection) Produce(topic string, messages ...kafka.Message) error {
 	return nil
 }
 
-func (c *Connection) Consume(topics []string, groupId string, messageCh chan<- kafka.Message, quit <-chan struct{}) error {
+func (c *Connection) Consume(topics []string, groupId string, messageCh chan<- kafka.Message, errCh chan<- error) {
 	ctx := c.Client.ctx
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        []string{c.Client.Host},
@@ -57,32 +57,19 @@ func (c *Connection) Consume(topics []string, groupId string, messageCh chan<- k
 		CommitInterval: 5 * time.Second,
 	})
 
-loop:
 	for {
-		select {
-		case <-quit:
-			break loop
-		default:
-			msg, err := reader.ReadMessage(ctx)
-			if err != nil {
-				err = fmt.Errorf("failed to read message: %w", err)
-				return err
-			}
-
-			messageCh <- msg
-
+		msg, err := reader.ReadMessage(ctx)
+		if err != nil {
+			err = fmt.Errorf("failed to read message: %w", err)
+			errCh <- err
 		}
+		messageCh <- msg
 	}
-
-	close(messageCh)
-	return nil
 }
 
 func (c *Connection) Subscribe(topics []string, groupId string, messageCh chan<- kafka.Message, errCh chan<- error, subscribed *bool) {
 	var wg sync.WaitGroup
 	wg.Add(1)
-
-	quit := make(chan struct{}, 1)
 
 	go func() {
 		for {
@@ -94,11 +81,8 @@ func (c *Connection) Subscribe(topics []string, groupId string, messageCh chan<-
 	}()
 
 	go func() {
-		errCh <- c.Consume(topics, groupId, messageCh, quit)
+		c.Consume(topics, groupId, messageCh, errCh)
 	}()
 
 	wg.Wait()
-	close(quit)
-
-	close(errCh)
 }

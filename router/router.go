@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sync"
 
 	kafka "github.com/arrrden/hykafka"
 	gkafka "github.com/segmentio/kafka-go"
@@ -79,7 +80,7 @@ type RouterImpl struct {
 	groupId   string
 	routeGrps map[string]*TopicRouteGroup
 	errTopic  string
-	stop      chan interface{}
+	stop      chan struct{}
 }
 
 // MsgHandler returns the handler for the route.
@@ -126,6 +127,7 @@ func (r *RouterImpl) RqTopics() []string {
 }
 
 func (r *RouterImpl) Listen() error {
+	var wg sync.WaitGroup
 	conn, err := r.client.NewConnection()
 	if err != nil {
 		return err
@@ -135,20 +137,18 @@ func (r *RouterImpl) Listen() error {
 	msgCh := make(chan kafka.Message)
 	errCh := make(chan error)
 
-	subscribed := true
-
 	go func() {
-		conn.Subscribe(r.RqTopics(), r.groupId, msgCh, errCh, &subscribed)
+		conn.Consume(r.RqTopics(), r.groupId, msgCh, errCh)
 	}()
 
+	wg.Add(1)
 	go func() {
 	loop:
 		for {
-			if !subscribed {
-				break loop
-			}
-
 			select {
+			case <-r.stop:
+				wg.Done()
+				break loop
 			case msg := <-msgCh:
 				r.callHandler(&msg)
 			case errs := <-errCh:
@@ -171,10 +171,7 @@ func (r *RouterImpl) Listen() error {
 		}
 	}()
 
-	<-r.stop
-	close(r.stop)
-	subscribed = false
-
+	wg.Wait()
 	return nil
 }
 

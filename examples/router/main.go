@@ -34,8 +34,8 @@ func main() {
 	go func() {
 		count := 0
 		for {
-			msg, _ := kafka.NewMessage("beans", "new-listing", listings.NewListingReq{Name: fmt.Sprintf("listing=%d", count)})
-			conn.Produce("listing-recommendation-requests", msg)
+			msg, _ := kafka.NewMessage("beans", "new-msg", listings.NewListingReq{Name: fmt.Sprintf("listing=%d", count)})
+			conn.Produce("my-topic", msg)
 
 			count += 1
 			time.Sleep(5 * time.Second)
@@ -49,9 +49,8 @@ func main() {
 
 	listingsHandler := listings.NewListingsHandler(&listings.Listings{})
 
-	recs := rtr.NewRouteGroup("listing-recommendation-requests", listingsHandler.DefaultHandler)
-	recs.HandleMsg("new-listing", listingsHandler.NewListing)
-	recs.HandleMsg("updated-listing", listingsHandler.UpdatedListing)
+	recs := rtr.NewRouteGroup("my-topic", listingsHandler.DefaultHandler)
+	recs.HandleMsg("new-msg", listingsHandler.NewListing)
 
 	if err := rtr.Listen(); err != nil {
 		log.Fatalf("failed to listen: %v", err.Error())
